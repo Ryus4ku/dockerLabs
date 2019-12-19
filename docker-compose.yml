@@ -1,25 +1,25 @@
 version: '3'
 services:
+  redis:
+    image: "redis"
+    ports:
+      - 6379:6379
   app:
     build: .
-    restart: always
-    expose:
-      - "8080"
     ports:
-      - 3000:8080
-    #networks:
-    #  public_net:
-    #    ipv4_address: 192.168.0.11
+      - 3000:9000
+    depends_on:
+      - redis
+    links:
+      - redis
   app1:
     build: .
-    restart: always
-    expose:
-      - "8080"
     ports:
-      - 3001:8080
-    #networks:
-    #  public_net:
-    #    ipv4_address: 192.168.0.22
+      - 3001:9000
+    links:
+      - redis
+    depends_on:
+      - redis
   nginx:
     container_name: nginx
     image: nginx:1.17.2-alpine
@@ -32,23 +32,3 @@ services:
     depends_on:
       - app
       - app1
-#  haproxy_img:
-#    build: ./haproxy
-#    ports:
-#      - 80:80
-#    expose:
-#      - 8080
-#    networks:
-#      public_net:
-#        ipv4_address: 192.168.0.33
-#    environment:
-#      - app=192.168.0.11
-#      - app1=192.168.0.22
-#      - APACHE_EXPOSED_PORT=8080
-#networks:
-#  public_net:
-#    driver: bridge
-#    ipam:
-#      driver: default
-#      config:
-#        - subnet: 192.168.0.0/24
