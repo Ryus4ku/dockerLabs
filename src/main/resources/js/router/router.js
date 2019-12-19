@@ -2,6 +2,7 @@
 import Vue               from 'vue'
 import VueRouter         from 'vue-router'
 import S3                from "../pages/S3.vue";
+import Vision             from "../pages/Vision.vue";
 
 Vue.use(VueRouter);
 
@@ -10,6 +11,11 @@ const routes = [
         path: '/',
         name: 'home',
         component: S3
+    },
+    {
+        path: '/vision',
+        name: 'vision',
+        component: Vision
     }
 ];
 

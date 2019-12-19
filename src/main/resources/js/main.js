@@ -2,6 +2,7 @@ import Vue         from 'vue'
 import 'vuetify/dist/vuetify.min.css'
 import '@babel/polyfill';
 import router      from './router/router'
+import store       from './store/mainStore'
 import lodash      from 'lodash'
 import VueResource from 'vue-resource'
 import App         from './pages/App.vue'
@@ -18,5 +19,6 @@ new Vue({
             iconfont: 'mdiSvg'|| 'faSvg', // 'mdi' || 'mdiSvg' || 'md' || 'fa' || 'fa4'
         },
     }),
+    store,
     render: a => a(App)
 });

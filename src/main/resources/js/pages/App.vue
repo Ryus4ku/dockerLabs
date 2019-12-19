@@ -1,6 +1,9 @@
 <template>
     <v-app>
         <div>
+            <router-link to="/vision">Перейти к Detect</router-link>
+        </div>
+        <div>
             <router-view></router-view>
         </div>
     </v-app>

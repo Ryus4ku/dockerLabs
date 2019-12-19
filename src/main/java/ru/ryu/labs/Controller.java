@@ -3,6 +3,7 @@ package ru.ryu.labs;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.ryu.labs.redis.Increment;
 import ru.ryu.labs.redis.IncrementRepository;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.Optional;
 
@@ -56,36 +56,47 @@ public class Controller {
     @GetMapping("clear")
     public void clear() { }
 
-    private final static String PARSER_URL = "https://smarty.mail.ru/api/v1/objects/detect";
+    private final static String SERVICE = "https://smarty.mail.ru";
+    private final static String DETECT = "/api/v1/objects/detect";
+    private final static String RECOGNIZE = "/api/v1/persons/recognize";
     private final static String TOKEN = "2PNC5RYdvT3Njq11v4vu3WhB5GJLET9PwCYHag9Mtpy3sntEBK";
+    private final static String FILE_NAME = "11967.jpg";
+    private final static String PROVIDER = "mcs";
 
-    @GetMapping("vision")
-    public ResponseEntity vision() throws IOException {
-        OkHttpClient client = new OkHttpClient();
-
-        Resource resourceCapture = (Resource) new ClassPathResource("vasa.bmp");
+    @PostMapping("vision")
+    public String vision() throws IOException {
+        Resource resourceCapture = new ClassPathResource(FILE_NAME);
 
         if (resourceCapture.exists() || resourceCapture.isReadable()) {
-            HttpUrl.Builder urlBuilder = HttpUrl.parse(PARSER_URL).newBuilder();
-            urlBuilder.addQueryParameter("oauth_provider", "mcs");
-            urlBuilder.addQueryParameter("oauth_token", TOKEN);
-            String url = urlBuilder.build().toString();
-
-            okhttp3.RequestBody formBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("meta", "{\"mode\":[\"object\"],\"images\":[{\"name\":\"file_0\"}]}")
-                    .addFormDataPart("file_0", fileS3.getKeyName(), okhttp3.RequestBody.create(MediaType.parse("multipart/form-data"), resourceCapture.getFile()))
-                    .build();
-
-            Request request = new Request.Builder()
-                    .url(url)
-                    .post(formBody)
-                    .build();
-
-            try (Response response = client.newCall(request).execute()) {
-                if (!response.isSuccessful()) throw new IOException("Не успешно: " + response);
-                return response.body().string();
+            OkHttpClient client = new OkHttpClient();
+            Request request = buildRequest(resourceCapture);
+            Response response = client.newCall(request).execute();
+            if (!response.isSuccessful()) {
+                throw new IOException("Ошибка: " + response);
             }
+
+            return response.body().string();
         }
+
+        return "";
+    }
+
+    private Request buildRequest(Resource resourceCapture) throws IOException {
+        HttpUrl.Builder urlBuilder = HttpUrl.parse(SERVICE + DETECT).newBuilder();
+        urlBuilder.addQueryParameter("oauth_provider", PROVIDER);
+        urlBuilder.addQueryParameter("oauth_token", TOKEN);
+
+        String url = urlBuilder.build().toString();
+
+        okhttp3.RequestBody formBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("meta", "{\"mode\":[\"pedestrian\"],\"images\":[{\"name\":\"file_0\"}]}")
+                .addFormDataPart("file_0", FILE_NAME, okhttp3.RequestBody.create(MediaType.parse("multipart/form-data"), resourceCapture.getFile()))
+                .build();
+
+        return new Request.Builder()
+                .url(url)
+                .post(formBody)
+                .build();
     }
 }
